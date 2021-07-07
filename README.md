@@ -18,7 +18,7 @@ Using long-lived Chat Channels, while helpful for the agent experience, could pr
 
 This function serves as a webhook endpoint and listen to Twilio event stream updates to receive the latest status of the channel, including task status and the corresponding timestamp. After receiving these data from event stream in real time, the function will create or update the document under Twilio Sync. In this design, one chat channel SID relates one document in Twilio Sync Service, upcoming task status update will only update the Sync Doc if it already exists without creating new document.
 
-1. Register to event stream
+## Register to event stream
 
 Event Streams is an API that allows you to tap into a unified stream of every interaction sent or received on Twilio.
 
@@ -46,10 +46,10 @@ twilio api:events:v1:sinks:create --description webhookfortask \
 
 twilio api:events:v1:subscriptions:create --description "all messages" --sink-sid DG7b3791ffc9ff8**\*\*** --types '{"type":"com.twilio.taskrouter.task.created","schema_version":1}'
 
-2. Create Sync Doc
+## Create Sync Doc
 
 Try to fetch the Sync Doc by the doc's unique name, here we use prefix + Channel SID. If an existing Sync Doc with the Channel SID related to the task from event stream doesn't exist, we will use this API to create a new Sync Doc.
 
-3. Update Sync doc
+## Update Sync doc
 
 # Twilio function: read Sync Doc and clean channel periodically using batch API call
