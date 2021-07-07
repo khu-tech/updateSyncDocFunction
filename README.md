@@ -50,6 +50,10 @@ twilio api:events:v1:subscriptions:create --description "all messages" --sink-si
 
 Try to fetch the Sync Doc by the doc's unique name, here we use prefix + Channel SID. If an existing Sync Doc with the Channel SID related to the task from event stream doesn't exist, we will use this API to create a new Sync Doc.
 
+https://www.twilio.com/docs/sync/api/document-resource
+
 ## Update Sync doc
+
+When a Sync Doc already exists after calling the fetch API, we can update the same Sync Doc when there's a new task router event.
 
 # Twilio function: read Sync Doc and clean channel periodically using batch API call
