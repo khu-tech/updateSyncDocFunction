@@ -57,3 +57,12 @@ https://www.twilio.com/docs/sync/api/document-resource
 When a Sync Doc already exists after calling the fetch API, we can update the same Sync Doc when there's a new task router event.
 
 # Twilio function: read Sync Doc and clean channel periodically using batch API call
+
+The Twilio function (updatechannel.js) servers the purpose of reading the current Sync Document, finding out the document with the chat channel of which eventtype equals "task.completed" and the timestamp matches the requirement (for example current time is two days after task.complete).
+
+Then the function will look up the channel, find out the current channel attribute, and then update it with
+
+channelAttributes.long_lived = false;
+channelAttributes.status = "INACTIVE";
+
+After resetting this channel attribute, next time when a customer texts the number, or agent initiates outbound SMS with the same customer's phone number, a new channel will be created. Since the new channel is created using the same long-lived Flex Flow, this channel will be long-lived from the beginning.
