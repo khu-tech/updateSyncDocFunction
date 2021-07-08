@@ -16,6 +16,7 @@ exports.handler = async function(context, event, callback) {
   response.appendHeader('Access-Control-Allow-Headers', 'Content-Type');
   
   const syncService = 'IS3a7134931a45629601274a855b9642af';
+  const chatService = 'IS14251c39981a41308cb433978ab8624d';
   let documents;
   let channel;
   let channelUpdate;
@@ -32,13 +33,14 @@ exports.handler = async function(context, event, callback) {
   
   for (const element of documents) {
     let data = element['data'];
+    console.log("This is data" + data);
     let eventType = data['eventtype'];
     let channelSid = data['channelsid'];
     if (eventType == "task.completed") {
       try {
          channel = await client
            .chat
-          .services(syncService)
+          .services(chatService)
           .channels(channelSid)
           .fetch()
       } catch(e){
@@ -53,7 +55,7 @@ exports.handler = async function(context, event, callback) {
          attributes: JSON.stringify(channelAttributes)}
     }
        try {
-         await client.chat.services(syncService)
+         await client.chat.services(chatService)
                 .channels(channelSid)
                 .update(channelUpdate)
          
