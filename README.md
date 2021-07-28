@@ -1,22 +1,24 @@
+This repository introduces a solution for a use case: when customers need to set their chat channel to be long-lived, in order to show the chat history even after the chat task has been completed or closed by the agent. At some point of time you want to go ahead and clear those channels (we will talk about 3 use cases as examples below), using two possible ways: 1) delete the channel 2) disable the long-lived setting from this channel , and set the channel to be inactive, in this case a brand new channel will be created next time when a new chat message comes in. Since the chat channel is still retained in Twilio's database, you can retrieve the channel information when you need using Twilio API: https://www.twilio.com/docs/chat/rest/channel-resource#fetch-a-channel-resource. This code sample is using the 2) solution.
+
 # Initiating Outbound SMS From Flex and keeping the chat channel long_lived
 
-The functions in this repository provide support for initiating outbound SMS - either as an agent, via a Task (see `functions\flex-initiate-outbound-sms-task.js`) or as an external system or any other fire-and-forget message sending source (see `functions\flex-initiate-outbound-sms.js`. **NOTE:** This README presently only covers the Task creation approach, but the other function is very similar and just doesn't use a Task Flex Flow.
+When creating the Flex flow, setting the LongLived to true will make every channel created from the Flex flow stay long lived, which means even after the agent wraps up and completes the task, the next time when a customer sends messages to the same number, a new task will be created, but the chat channel will remain the same - https://github.com/twilio-professional-services/function-flex-outbound-sms/blob/master/README.md#create-direct-to-task-flex-flow
 
-When creating the Flex flow before calling the function above, setting the LongLived to true will make every channel created from the Flex flow stay long lived, which means even after the agent wraps up and completes the task, the next time when a customer writes to the same number, a new task will be created, but all the chat history from this channel will be retained - https://github.com/twilio-professional-services/function-flex-outbound-sms/blob/master/README.md#create-direct-to-task-flex-flow
+Using long-lived Chat Channels, while it's helpful for the agent experience, could present problems with security and performance at scale. The next session we will talk about the common use cases you might want to clean these channels so as to create new one, and go through the details how we use Twilio functions to achieve this goal.
 
-Using long-lived Chat Channels, while helpful for the agent experience, could present problems with security and performance at scale. Learn more about scaling and securing a chat application to learn more about useful considerations for maintaining long-lived Chat Channels. Hence this github repo will introduce the design to clean these chat channels.
-
-## Example Use Cases for cleanning long-lived chat channel
+## Example Use Cases for cleaning long-lived chat channel
 
 1. When agent initiates outbound SMS message, and doesn't hear back from the customer for a long period of time (i.e several days), the agent closes the task in Flex UI. Sometime after the agent does that, you might want to consider to reset this channel and remove the long lived setting.
-2. When agent initiates outbound SMS message, the customer responds late but still within the time before you reset the channel. For example, your design is to reset the channel two days after the agent closes the task, and the customer replies 1 day after task closing. In that case, you might want to reset the timestamp, and only consider to reset the channel to short lived sometime after the agent closes the task next time.
-3. By resetting the channel to LongLived = false, and status = inactive. Next time when the customer or the agent communicates using the same phone numbers, a new task will be created with new chat channel, the chat history will not show up in the Flex message canvas. However, since the channel was deleted, there's still a way to retrieve the chat history through API call. If you would like to delete the channel completely instead of setting it to inactive, you can consider to use the channel delete API instead- https://www.twilio.com/docs/chat/rest/channel-resource.
+
+2. When agent initiates outbound SMS message, the customer responds late but still within the time before you reset the channel. For example, your design is to reset the channel two days after the agent closes the task, and the customer replies 1 day after task closing. In that case, you might want to reset the timestamp, and only consider to reset the channel to non long-lived after the agent closes the task next time after chatting with this customer.
+
+3. By resetting the channel to LongLived = false, and status = inactive, next time when the customer or the agent communicates using the same phone numbers, a new task will be created with new chat channel, the chat history will not show up in the Flex message canvas. If you would like to delete the channel completely instead of setting it to inactive, you can consider to use the channel delete API instead- https://www.twilio.com/docs/chat/rest/channel-resource. However, since the channel was deleted, there won't be a way to retrieve the chat history through API call.
 
 # Twilio Function: update the channel task status to Twilio Sync Document
 
 ## Overview
 
-This function serves as a webhook endpoint and listen to Twilio event stream updates to receive the latest status of the channel, including task status and the corresponding timestamp. After receiving these data from event stream in real time, the function will create or update the document under Twilio Sync. In this design, one chat channel SID relates one document in Twilio Sync Service, upcoming task status update will only update the Sync Doc if it already exists without creating new document.
+This function (eventstream.js) serves as a webhook endpoint and listens to Twilio event stream updates to receive the latest status of the channel, including task status and the corresponding timestamp. After receiving these data from event stream in real time, the function will create or update the document under Twilio Sync. In this design, one chat channel SID relates one document in Twilio Sync Service, upcoming task status update will only update the Sync Doc if it already exists without creating new document.
 
 ## Register to event stream
 
@@ -66,3 +68,5 @@ channelAttributes.long_lived = false;
 channelAttributes.status = "INACTIVE";
 
 After resetting this channel attribute, next time when a customer texts the number, or agent initiates outbound SMS with the same customer's phone number, a new channel will be created. Since the new channel is created using the same long-lived Flex Flow, this channel will be long-lived from the beginning.
+
+# Twilio Service and function deployment
